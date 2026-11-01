@@ -64,7 +64,7 @@ Semana 08/
 
 ## Ejecutar
 
-Se requiere JDK 17 o posterior. Para ejecutar la aplicación, configura y activa una instancia local de MySQL según `demo01/src/main/resources/application.properties`.
+Se requiere JDK 17 o posterior. Para ejecutar la aplicación, inicia una instancia local de MySQL según `demo01/src/main/resources/application.properties`. El servidor escucha en el puerto **8081** porque Oracle TNS Listener utiliza el puerto 8080 en este equipo.
 
 En PowerShell:
 
@@ -73,6 +73,8 @@ Set-Location "Semana 08\demo01"
 .\mvnw.cmd test
 .\mvnw.cmd spring-boot:run
 ```
+
+La URL base del API es `http://localhost:8081`.
 
 Las pruebas usan H2 y no necesitan MySQL. La suite verificada contiene **20 pruebas** y terminó sin fallos.
 
