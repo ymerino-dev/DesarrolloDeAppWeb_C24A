@@ -16,6 +16,8 @@ Cada carpeta semanal contiene el material correspondiente a esa entrega. La raí
 | 06 | Material pendiente de incorporar |
 | 07 | Material pendiente de incorporar |
 | 08 | Laboratorio 08: pruebas del API de Productos y CRUD de Categorías. Consulta la [guía de la Semana 08](Semana%2008/README.md). |
+| 09 | Proyecto de la Semana 09 (ver contenido de la carpeta). |
+| 12 | Evaluación: servidor de descubrimiento Eureka (Spring Cloud Netflix). Proyecto [ms-eureka-server](Semana%2012/Evaluacion/ms-eureka-server). |
 
 ## Organización
 
@@ -29,9 +31,12 @@ DesarrolloAppWeb_C24A/
 ├── Semana 05/
 ├── Semana 06/
 ├── Semana 07/
-└── Semana 08/
-    ├── README.md             # Descripción técnica del Laboratorio 08
-    └── demo01/               # Proyecto Spring Boot
+├── Semana 08/
+│   ├── README.md             # Descripción técnica del Laboratorio 08
+│   └── demo01/               # Proyecto Spring Boot
+└── Semana 12/
+    └── Evaluacion/
+        └── ms-eureka-server/ # Servidor Eureka (Spring Cloud Netflix)
 ```
 
-Las carpetas 01–07 quedan preparadas para incorporar sus entregas cuando estén disponibles. El trabajo implementado actualmente está en la Semana 08.
+Las carpetas 01–07 quedan preparadas para incorporar sus entregas cuando estén disponibles. El trabajo implementado actualmente está en las carpetas Semana 08, Semana 09 y Semana 12.
