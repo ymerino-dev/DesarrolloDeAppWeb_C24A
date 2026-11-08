@@ -1,76 +1,150 @@
-# 🛡️ Semana 09: Autenticación JWT y Autorización por Roles con Spring Boot y MySQL
+# Laboratorio semana 09 Autenticación JWT
 
-## 📝 Presentación y Autoría
-- **Autor / Estudiante:** ymerino-dev
-- **Curso:** Desarrollo de Aplicaciones Web
-- **Institución:** Tecsup
-- **Laboratorio:** Semana 09 - Autenticación y Autorización RESTful
+Aplicación REST con Spring Boot, Spring Security, MySQL y JSON Web Tokens. Permite registrar usuarios con roles, iniciar sesión y proteger rutas según el rol asignado.
 
-Este repositorio contiene la implementación práctica del laboratorio de la **Semana 09**. En esta sesión se abordó el desarrollo e integración de un esquema de seguridad sin estado (**Stateless**) en una arquitectura RESTful. Se migró el control de sesiones tradicional a un mecanismo robusto basado en **JSON Web Tokens (JWT)** con firma criptográfica HS256, gestionando la persistencia de usuarios y roles en un servidor **MySQL** mediante **Spring Data JPA**.
+## Requisitos
 
----
+- Java 17 o superior y MySQL 8 en ejecución.
+- La aplicación crea la base de datos `security_db` si el usuario de MySQL tiene permiso.
 
-## 🎯 Objetivos del Laboratorio
-1. **Implementar Autenticación Stateless:** Desacoplar la gestión de sesiones del servidor mediante la generación, firma y validación de tokens de acceso JWT (JJWT).
-2. **Aplicar Control de Acceso Basado en Roles (RBAC):** Restringir dinámicamente el acceso a endpoints según el rol asignado (`ROLE_USER`, `ROLE_ADMIN`, `ROLE_MODERATOR`).
-3. **Persistir Datos de Seguridad con JPA:** Mapear y administrar las entidades relacionales de usuarios y roles en MySQL utilizando Hibernate/Spring Data JPA.
-4. **Garantizar el Cifrado de Credenciales:** Implementar el cifrado unidireccional de contraseñas en la base de datos utilizando el algoritmo **BCrypt** (`BCryptPasswordEncoder`).
-5. **Validación y Pruebas de API:** Verificar los flujos de registro (`/signup`), autenticación (`/signin`) y acceso a rutas protegidas adjuntando el encabezado `Authorization: Bearer <token>` a través de Postman.
+Configura credenciales por variables de entorno si tu instalación no usa `root` sin contraseña:
 
----
+```powershell
+$env:DB_USERNAME="root"
+$env:DB_PASSWORD="tu_clave"
+$env:JWT_SECRET="una_clave_local_de_al_menos_32_caracteres"
+```
 
-## 🚀 Tecnologías y Herramientas Utilizadas
+También puedes crear previamente la base de datos con `CREATE DATABASE security_db;`. En PowerShell, desde `Semana 09`, ejecuta `.\mvnw.cmd spring-boot:run`. El servicio usa el puerto `8082` por defecto porque los proyectos de semanas anteriores pueden ocupar `8080` o `8081`. Si `8082` también está ocupado, elige otro puerto, por ejemplo `$env:SERVER_PORT="8090"`, antes de iniciar.
 
-### Backend & Seguridad
-- **Java 17 (JDK):** Entorno de ejecución y lenguaje base del backend.
-- **Spring Boot 3.1.5:** Framework principal para la creación de la API REST.
-- **Spring Security:** Gestión de la cadena de filtros de seguridad, codificación de contraseñas y control de autorización.
-- **Spring Data JPA & Hibernate:** Mapeo objeto-relacional para persistencia de datos.
-- **JJWT (`io.jsonwebtoken` v0.11.5):** Librería para la generación, firma y validación de tokens JWT.
-- **Lombok & Validation:** Reducción de código repetitivo y validación de DTOs.
+Para revisar qué proceso está usando un puerto en Windows, ejecuta `Get-NetTCPConnection -LocalPort 8082 -State Listen` y consulta el PID con `Get-Process -Id <PID>`. Cada instancia de Spring Boot que siga ejecutándose conserva su puerto hasta que se detenga; en la terminal donde se inició, pulsa `Ctrl+C`. No se debe cerrar un proceso que no reconozcas.
 
-### Base de Datos y Entorno
-- **MySQL Server (v8.0 / 8.4):** Sistema gestor de base de datos relacional.
-- **SQLyog:** Cliente gráfico de administración para MySQL[cite: 1].
-- **Maven Wrapper (`mvnw.cmd`):** Empaquetador portable para compilar y ejecutar la aplicación sin requerir instalación global de Maven[cite: 1].
-- **Git & GitHub:** Control de versiones y alojamiento del repositorio académico.
+## Endpoints
 
----
+### Registrar administrador
 
-## 📂 Estructura del Proyecto (`demo_Security_JWT`)
+`POST http://localhost:8082/api/auth/signup`
 
-```text
-Semana 09/
-├── demo_Security_JWT/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/tecsup/
-│   │   │   │   ├── config/
-│   │   │   │   │   └── SecurityConfig.java          # Configuración global de Spring Security y gestión de CORS/CSRF
-│   │   │   │   ├── controller/
-│   │   │   │   │   ├── AuthController.java          # Endpoints públicos (/signup, /signin)
-│   │   │   │   │   └── TestController.java          # Endpoints protegidos con verificación de roles
-│   │   │   │   ├── dto/
-│   │   │   │   │   ├── JwtResponse.java             # DTO de respuesta con el Token al autenticarse
-│   │   │   │   │   ├── LoginRequest.java            # DTO de entrada para credenciales
-│   │   │   │   │   ├── MessageResponse.java          # DTO para respuestas genéricas en JSON
-│   │   │   │   │   └── SignupRequest.java           # DTO para registro de datos de nuevo usuario
-│   │   │   │   ├── entity/
-│   │   │   │   │   ├── Role.java                    # Mapeo de la tabla 'roles'
-│   │   │   │   │   └── User.java                    # Mapeo de la tabla 'users' y relación N:M con roles
-│   │   │   │   ├── jwt/
-│   │   │   │   │   ├── JwtAuthFilter.java           # Filtro que intercepta peticiones y valida el Bearer Token
-│   │   │   │   │   └── JwtUtils.java                # Utilidades para firmar, parsear y validar JWT
-│   │   │   │   ├── repository/
-│   │   │   │   │   ├── RoleRepository.java          # Consultas JPA para la entidad Role
-│   │   │   │   │   └── UserRepository.java          # Consultas JPA para la entidad User
-│   │   │   │   └── service/
-│   │   │   │   │   ├── UserDetailsImpl.java         # Adaptador que convierte la entidad User a UserDetails de Spring Security
-│   │   │   │   │   └── UserDetailsServiceImpl.java  # Servicio para cargar usuarios por email/username
-│   │   │   │   └── DemoSecurityJwtApplication.java # Clase principal de arranque de Spring Boot
-│   │   │   └── resources/
-│   │   │       └── application.properties           # Conexión DB, propiedades de JPA y firma JWT
-│   ├── mvnw.cmd                                     # Ejecutable ejecutor de Maven en Windows
-│   └── pom.xml                                      # Configuración de dependencias de Maven
-└── README.md                                        # Documentación formal de la Semana 09
+```json
+{"username":"admin","email":"admin@test.com","password":"123456","roles":["ADMIN"]}
+```
+
+### Registrar usuario
+
+`POST http://localhost:8082/api/auth/signup`
+
+```json
+{"username":"user1","email":"user@test.com","password":"123456","roles":["USER"]}
+```
+
+Si no se envía `roles`, se asigna `USER`. Para este laboratorio se admite enviar `ADMIN` en el alta. En una aplicación real, el rol administrador debe concederse únicamente desde un proceso confiable.
+
+### Iniciar sesión
+
+`POST http://localhost:8082/api/auth/signin`
+
+```json
+{"email":"admin@test.com","password":"123456"}
+```
+
+La respuesta incluye `accessToken` y `tokenType: Bearer`. En Postman:
+
+1. Inicia el servicio MySQL de Windows (por ejemplo, desde **Servicios** o el panel de XAMPP) y confirma que escucha en el puerto `3306`.
+2. Inicia la API desde la carpeta `Semana 09` con `.\mvnw.cmd spring-boot:run`. Espera el mensaje `Started DemoSecurityJwtApplication`; el servidor HTTP escucha en `8082`.
+3. Crea las solicitudes `POST` de signup y signin indicadas arriba. En **Body → raw → JSON**, pega cada objeto. Primero registra un administrador y luego un usuario normal.
+4. Para probar lo público, envía `GET http://localhost:8082/api/test/all` sin autorización. Debe responder `Public Content`.
+5. Para iniciar sesión como administrador, envía el signup correspondiente una sola vez y luego el signin. Copia el `accessToken` devuelto.
+6. Crea `GET http://localhost:8082/api/test/admin`, abre **Authorization → Bearer Token**, pega el token y envía. Debe responder `Admin Content`. Repite con el token del usuario normal en `/api/test/user` (esperado `User Content`) y en `/api/test/admin` (esperado HTTP 403).
+
+Si `8082` ya está ocupado, antes de ejecutar Maven establece `$env:SERVER_PORT="8090"` y reemplaza `8082` por `8090` en las URLs de Postman. Para regresar al puerto normal, cierra esa terminal o ejecuta `Remove-Item Env:SERVER_PORT`.
+
+| Método | Ruta | Acceso | Respuesta esperada |
+|---|---|---|---|
+| GET | `/api/test/all` | Público | `Public Content` |
+| GET | `/api/test/user` | USER o ADMIN | `User Content` |
+| GET | `/api/test/admin` | ADMIN | `Admin Content` |
+
+Con el puerto por defecto, usa `http://localhost:8082` como base URL en Postman. Las rutas y cuerpos de ejemplo de arriba se completan con esa base URL.
+
+Sin autenticación, una ruta protegida devuelve HTTP 401. Con un token válido pero sin el rol requerido, devuelve HTTP 403. Un token modificado o expirado no autentica al solicitante y la ruta protegida devuelve HTTP 401.
+
+## Análisis de seguridad JWT
+
+### Caso 1 Ruta pública
+
+1. Devuelve `Public Content`.
+2. La respuesta está en `TestController`.
+3. La genera `allAccess()`.
+4. No exige autenticación porque está marcada como pública en la cadena de seguridad.
+5. `SecurityConfig.securityFilterChain()` define `/api/test/all` con `permitAll()`.
+6. Al quitar `permitAll()`, la ruta cae en la regla general y exigiría autenticación.
+7. `SecurityFilterChain` aplica las reglas de autorización y ordena los filtros de Spring Security.
+
+### Caso 2 Acceso sin token
+
+1. No llega al controlador; Spring Security responde con un cuerpo de error de autenticación.
+2. HTTP 401 Unauthorized.
+3. `JwtAuthFilter` procesa la cabecera antes del controlador; después la cadena de autorización rechaza el acceso.
+4. No se autenticó ningún usuario en el contexto de seguridad.
+5. No, el método del controlador no se ejecuta.
+6. Participan `JwtAuthFilter` y los filtros de autorización/autenticación de Spring Security.
+7. La ruta exige un usuario autenticado y el contexto no contiene autenticación.
+
+### Caso 3 Token inválido
+
+1. La ruta protegida responde HTTP 401 porque no se establece una autenticación.
+2. `validateJwtToken()` valida firma y vigencia.
+3. Está en `JwtUtils`.
+4. Se usa JJWT (`io.jsonwebtoken`).
+5. JJWT puede producir `JwtException` (por ejemplo, `SignatureException` o `ExpiredJwtException`); `validateJwtToken()` las captura y devuelve `false`.
+6. Sin token no se intenta validar uno; con token inválido se intenta validar y se rechaza. Ambos dejan la solicitud sin autenticar.
+7. `JwtAuthFilter` continúa la cadena sin establecer un usuario; Spring Security bloquea el endpoint protegido.
+
+### Caso 4 Acceso con token válido
+
+1. Devuelve `User Content`.
+2. Se ejecuta `userAccess()`.
+3. `JwtAuthFilter` extrae y valida el token, carga al usuario y registra la autenticación.
+4. Carga el email del claim `subject` mediante `UserDetailsServiceImpl`.
+5. La autenticación se guarda en `SecurityContextHolder`.
+6. Flujo: Postman envía `Authorization: Bearer <token>` → `JwtAuthFilter` extrae el token → `JwtUtils` verifica firma y expiración → se carga el usuario y sus roles → `SecurityContextHolder` recibe `Authentication` → Spring Security autoriza → `TestController` responde.
+7. Un token expirado se rechaza, no crea autenticación y la ruta protegida responde HTTP 401.
+
+### Caso 5 Usuario USER en ruta ADMIN
+
+1. La API responde acceso denegado.
+2. HTTP 403 Forbidden: el usuario sí se autenticó, pero carece del rol requerido.
+3. El control se configura en `SecurityConfig`.
+4. `securityFilterChain()` usa `hasRole("ADMIN")` para `/api/test/admin`.
+5. `UserDetailsImpl.build()` convierte los roles persistidos a autoridades `ROLE_USER` o `ROLE_ADMIN`; luego viajan en `Authentication`.
+6. Las autoridades están en la colección `GrantedAuthority` del `Authentication`.
+7. Autenticación identifica quién es el usuario; autorización decide qué puede hacer.
+8. `ROLE_USER` no satisface la regla `ROLE_ADMIN`.
+
+### Caso 6 Usuario ADMIN en ruta ADMIN
+
+1. Devuelve `Admin Content`.
+2. Se ejecuta `adminAccess()`.
+3. Se validaron la firma y expiración del JWT, se cargó el usuario y se verificó que la autenticación contenga `ROLE_ADMIN`.
+4. El usuario tiene rol `ADMIN`.
+5. `SecurityContextHolder` mantiene el objeto `Authentication` durante la solicitud.
+6. Flujo: Postman → cabecera Bearer → `JwtAuthFilter` → `JwtUtils` → carga de usuario/roles → `SecurityContextHolder` → autorización ADMIN → controlador.
+7. `JwtUtils.generateJwtToken()` genera el token al iniciar sesión.
+
+## Observaciones
+
+1. Se creó la base de datos `security_db` antes de iniciar el backend.
+2. Las credenciales de MySQL dependen de la instalación local y pueden establecerse con variables de entorno.
+3. Las contraseñas se guardan con BCrypt; no se almacenan en texto plano.
+4. Las rutas protegidas requieren enviar el token con el prefijo `Bearer`.
+5. Un token vencido o alterado no establece autenticación; un rol insuficiente produce HTTP 403.
+
+## Conclusiones
+
+1. JWT permite autenticar solicitudes REST sin mantener una sesión de servidor.
+2. Spring Security valida la autenticación y aplica autorización usando las autoridades del usuario.
+3. Separar `JwtAuthFilter`, `JwtUtils` y `UserDetailsServiceImpl` facilita identificar cada parte del flujo.
+4. BCrypt protege las contraseñas, mientras la firma HMAC protege la integridad del token.
+5. La práctica distingue los errores de autenticación (401) de los errores de permisos (403), lo que facilita diagnosticar el acceso.
+
 
